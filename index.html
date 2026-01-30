@@ -3,92 +3,100 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Smart Properties Catalog | CoCo Master</title>
+    <title>CoCo Master Catalog V2</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;600&display=swap" rel="stylesheet">
     <style>
         body { font-family: 'Kanit', sans-serif; background-color: #f8fafc; }
-        .property-card:hover { transform: translateY(-5px); transition: all 0.3s ease; }
+        .modal { display: none; position: fixed; z-index: 100; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.9); overflow-y: auto; }
     </style>
 </head>
 <body>
 
-    <header class="bg-blue-900 text-white py-8 shadow-lg">
+    <header class="bg-blue-900 text-white py-12 shadow-xl">
         <div class="container mx-auto text-center">
-            <h1 class="text-3xl font-bold">SMART PROPERTIES CATALOG</h1>
-            <p class="mt-2 text-blue-200">CoCo Hua Hin 88 Luxury Home Project</p>
+            <h1 class="text-4xl font-bold tracking-widest uppercase">SMART PROPERTIES CATALOG</h1>
+            <p class="mt-2 text-blue-200 uppercase text-xs">Distributed Data Management System</p>
         </div>
     </header>
 
-    <main class="container mx-auto px-4 py-10">
-        <div id="loading" class="text-center text-gray-600">กำลังโหลดข้อมูลโครงการ...</div>
-        
-        <div id="property-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            </div>
+    <main class="container mx-auto px-4 py-12">
+        <div id="loading" class="text-center py-20 text-xl text-gray-500 animate-pulse">กำลังโหลดข้อมูลล่าสุด...</div>
+        <div id="property-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"></div>
     </main>
 
+    <div id="detailModal" class="modal">
+        <div class="bg-white mx-auto my-5 md:my-10 rounded-3xl max-w-5xl shadow-2xl relative overflow-hidden">
+            <button onclick="closeModal()" class="absolute top-5 right-5 bg-white text-black w-10 h-10 rounded-full z-50 shadow-xl font-bold">✕</button>
+            <div id="modalContent"></div>
+        </div>
+    </div>
+
     <script>
-        // 1. วาง URL Web App ที่ได้จาก Google Apps Script ที่นี่
         const webAppUrl = "https://script.google.com/macros/s/AKfycbyM_VLt7VopGvvaftxzp1Fb1Gk1Nwr723CN_zJZg6yu0gFqk1gdIJMqxvgaJ1xqud8X/exec";
 
         async function fetchProperties() {
             try {
-                const response = await fetch(`${webAppUrl}?action=getPublicCatalog`);
+                const response = await fetch(webAppUrl + "?action=getPublicCatalog");
                 const result = await response.json();
-                
-                if (result.status === "success") {
-                    displayProperties(result.data);
-                } else {
-                    document.getElementById('loading').innerText = "ไม่สามารถโหลดข้อมูลได้: " + result.message;
-                }
-            } catch (error) {
-                document.getElementById('loading').innerText = "เกิดข้อผิดพลาดในการเชื่อมต่อ";
-                console.error(error);
-            }
+                if (result.status === "success") displayProperties(result.data);
+            } catch (error) { document.getElementById('loading').innerText = "⚠️ การเชื่อมต่อขัดข้อง"; }
         }
 
         function displayProperties(properties) {
             const grid = document.getElementById('property-grid');
-            const loader = document.getElementById('loading');
-            loader.style.display = 'none';
-            grid.innerHTML = '';
-
-            properties.forEach(item => {
-                const card = `
-                    <div class="property-card bg-white rounded-xl shadow-md overflow-hidden border border-gray-100">
-                        <div class="relative">
-                            <img src="${item.Thumbnail_Image || 'https://via.placeholder.com/400x250'}" class="w-full h-56 object-cover" alt="${item.ID_NAME}">
-                            <span class="absolute top-4 right-4 bg-orange-500 text-white px-3 py-1 rounded-full text-sm font-semibold shadow">
-                                ${item.Badge || 'NEW'}
-                            </span>
+            document.getElementById('loading').style.display = 'none';
+            grid.innerHTML = properties.map(item => `
+                <div class="bg-white rounded-3xl shadow-lg overflow-hidden border border-gray-100">
+                    <img src="${item.Thumbnail_Image}" class="w-full h-64 object-cover" alt="Property">
+                    <div class="p-6">
+                        <div class="flex justify-between items-start mb-4">
+                            <h3 class="text-xl font-bold text-gray-800">${item.HP_ID}</h3>
+                            <span class="bg-blue-100 text-blue-600 px-3 py-1 rounded-full text-[10px] font-bold uppercase">${item.Badge || 'NEW'}</span>
                         </div>
-                        <div class="p-6">
-                            <div class="flex justify-between items-start mb-2">
-                                <h2 class="text-xl font-bold text-gray-800">${item.HP_ID} - ${item.ID_NAME}</h2>
-                                <span class="text-blue-600 font-bold text-lg">฿${Number(item.Price).toLocaleString()}</span>
-                            </div>
-                            <p class="text-gray-500 text-sm mb-4 line-clamp-2">${item.Description}</p>
-                            
-                            <div class="grid grid-cols-3 gap-2 border-t border-b py-3 mb-4 text-center text-sm text-gray-600">
-                                <div><span class="block font-bold">${item.Bedrooms}</span> นอน</div>
-                                <div><span class="block font-bold">${item.Bathrooms}</span> น้ำ</div>
-                                <div><span class="block font-bold">${item["Living Area (sq.m)"]}</span> ตร.ม.</div>
-                            </div>
-
-                            <div class="flex gap-2">
-                                <a href="${item.FBLink}" target="_blank" class="flex-1 bg-blue-600 text-white text-center py-2 rounded-lg hover:bg-blue-700 transition">Facebook</a>
-                                <button onclick="alert('ID: ${item.HP_ID}\\nPlot: ${item.Plot}')" class="flex-1 border border-blue-600 text-blue-600 py-2 rounded-lg hover:bg-blue-50 transition">รายละเอียด</button>
-                            </div>
-                        </div>
+                        <p class="text-3xl font-bold text-blue-600 mb-6 font-sans">฿${Number(item.Price).toLocaleString()}</p>
+                        <button onclick='showDetails(${JSON.stringify(item).replace(/'/g, "&apos;")})' class="w-full bg-blue-600 text-white py-4 rounded-2xl font-bold hover:bg-blue-700 transition-all">ดูรายละเอียดเชิงลึก</button>
                     </div>
-                `;
-                grid.innerHTML += card;
-            });
+                </div>
+            `).join('');
         }
 
-        // เริ่มทำงานเมื่อเปิดหน้าเว็บ
+        function showDetails(item) {
+            const modal = document.getElementById('detailModal');
+            const content = document.getElementById('modalContent');
+            const images = item.Image_List ? item.Image_List.split(',') : [item.Thumbnail_Image];
+            
+            content.innerHTML = `
+                <div class="flex flex-col lg:flex-row max-h-[90vh]">
+                    <div class="lg:w-3/5 p-6 bg-gray-50 overflow-y-auto">
+                        <h4 class="text-lg font-bold mb-4">🖼️ รูปภาพประกอบ (${images.length})</h4>
+                        <div class="space-y-4">
+                            ${images.map(img => `<img src="${img}" class="w-full rounded-2xl shadow-md">`).join('')}
+                        </div>
+                    </div>
+                    <div class="lg:w-2/5 p-8 overflow-y-auto">
+                        <h2 class="text-3xl font-bold mb-2">${item.HP_ID}</h2>
+                        <p class="text-blue-600 font-bold mb-6 italic">${item.Project_Name}</p>
+                        <div class="space-y-4 text-sm text-gray-700 border-t pt-6">
+                            <p><strong>ขนาด:</strong> ${item["Living Area (sq.m)"]} ตร.ม.</p>
+                            <p><strong>พล็อต:</strong> ${item.Plot}</p>
+                            <p><strong>รายละเอียด:</strong> ${item.Description}</p>
+                        </div>
+                        <a href="${item.Map_Link}" target="_blank" class="block w-full bg-green-500 text-white text-center py-4 rounded-2xl font-bold mt-8">📍 เปิด Google Maps</a>
+                    </div>
+                </div>
+            `;
+            modal.style.display = "block";
+            document.body.style.overflow = "hidden";
+        }
+
+        function closeModal() { 
+            document.getElementById('detailModal').style.display = "none"; 
+            document.body.style.overflow = "auto";
+        }
+        
+        window.onclick = (e) => { if (e.target.id === "detailModal") closeModal(); }
         fetchProperties();
     </script>
 </body>
 </html>
- 
