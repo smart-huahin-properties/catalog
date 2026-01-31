@@ -3,46 +3,55 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CoCo Master - Smart Hybrid Uploader</title>
+    <title>CoCo Master - Dual Uploader</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;600&display=swap" rel="stylesheet">
     <style>body { font-family: 'Prompt', sans-serif; }</style>
 </head>
 <body class="bg-slate-50 min-h-screen p-4 text-slate-800">
     <div class="max-w-md mx-auto bg-white rounded-[2.5rem] shadow-2xl p-8 mt-6">
-        <h2 class="text-2xl font-bold text-center mb-6">🚀 ระบบจัดการรูปภาพ</h2>
+        <h2 class="text-2xl font-bold text-center mb-6 text-slate-700">📸 จัดการรูปภาพ</h2>
         
-        <div class="flex gap-2 mb-8 bg-slate-100 p-1.5 rounded-2xl">
+        <div class="flex gap-2 mb-6 bg-slate-100 p-1.5 rounded-2xl">
             <button onclick="switchMode('new')" id="tabNew" class="flex-1 py-3 rounded-xl font-bold bg-white shadow-sm text-blue-600 transition-all">➕ เพิ่มใหม่</button>
             <button onclick="switchMode('edit')" id="tabEdit" class="flex-1 py-3 rounded-xl font-bold text-slate-500 transition-all">✏️ แก้ไขเดิม</button>
         </div>
 
-        <div id="sectionNew" class="mb-6">
-            <label class="block font-semibold mb-2 ml-1">รหัสบ้านใหม่ (Auto-Run):</label>
-            <input type="text" id="hpIdNew" readonly class="w-full p-4 bg-slate-50 border-2 border-dashed border-slate-200 rounded-2xl font-bold text-blue-600 outline-none text-center">
+        <div id="sectionNew" class="mb-4">
+            <label class="block font-semibold mb-2 ml-1 text-sm text-slate-500">รหัสบ้านใหม่ (Auto-Run):</label>
+            <input type="text" id="hpIdNew" readonly class="w-full p-3 bg-slate-50 border-2 border-dashed border-slate-200 rounded-xl font-bold text-blue-600 text-center outline-none">
+        </div>
+        <div id="sectionEdit" class="hidden mb-4">
+            <label class="block font-semibold mb-2 ml-1 text-sm text-slate-500">เลือกบ้านที่จะแก้ไข:</label>
+            <select id="hpIdEdit" class="w-full p-3 bg-white border-2 border-slate-200 rounded-xl outline-none focus:border-blue-500 appearance-none"></select>
         </div>
 
-        <div id="sectionEdit" class="hidden mb-6">
-            <label class="block font-semibold mb-2 ml-1">เลือกบ้านที่จะเพิ่มรูป/แก้ไข:</label>
-            <select id="hpIdEdit" class="w-full p-4 bg-white border-2 border-slate-200 rounded-2xl outline-none focus:border-blue-500 appearance-none">
-                <option value="">กำลังโหลดรายการ...</option>
-            </select>
+        <hr class="my-6 border-slate-100">
+
+        <div class="mb-6">
+            <label class="block font-semibold mb-2 ml-1">🖼️ รูปหน้าปก (เลือกได้ 1 รูป)</label>
+            <label class="flex items-center justify-center w-full h-16 bg-blue-50 border-2 border-blue-200 border-dashed rounded-2xl cursor-pointer hover:bg-blue-100 transition-all">
+                <span id="labelThumb" class="text-blue-600 font-medium">📷 แตะเพื่อเลือกหน้าปก</span>
+                <input type="file" id="inputThumb" accept="image/*" class="hidden" onchange="checkFiles('thumb')">
+            </label>
         </div>
 
         <div class="mb-8">
-            <label class="block font-semibold mb-2 ml-1 text-sm">เลือกรูปภาพ (รูปแรก = หน้าปก)</label>
-            <input type="file" id="fileInput" multiple accept="image/*" class="w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:bg-blue-50 file:text-blue-700">
+            <label class="block font-semibold mb-2 ml-1">📂 รูปอัลบั้ม (ไม่เกิน 15 รูป)</label>
+            <label class="flex items-center justify-center w-full h-16 bg-emerald-50 border-2 border-emerald-200 border-dashed rounded-2xl cursor-pointer hover:bg-emerald-100 transition-all">
+                <span id="labelGallery" class="text-emerald-600 font-medium">🖼️ แตะเพื่อเพิ่มรูปอัลบั้ม</span>
+                <input type="file" id="inputGallery" multiple accept="image/*" class="hidden" onchange="checkFiles('gallery')">
+            </label>
         </div>
 
-        <div id="statusBox" class="hidden mb-6 p-4 rounded-2xl text-center text-sm"></div>
+        <div id="statusBox" class="hidden mb-6 p-4 rounded-2xl text-center text-sm font-semibold"></div>
 
-        <button onclick="handleUpload()" id="uploadBtn" class="w-full bg-blue-600 text-white py-5 rounded-2xl font-bold text-lg shadow-lg hover:bg-blue-700 transition-all">
-            ยืนยันการดำเนินการ
+        <button onclick="handleUpload()" id="uploadBtn" class="w-full bg-slate-800 text-white py-5 rounded-2xl font-bold text-lg shadow-lg active:scale-95 transition-all">
+            ยืนยันการอัปโหลด
         </button>
     </div>
 
     <script>
-        // 🛑 อย่าลืมวาง URL ของคุณตรงนี้ครับ
         const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxLP6N5B4xJNpIMET1xnU4kTI69DiaTNECfLC0JpI9yKgyvN2P6as9VuasemBeq0A_o/exec"; 
         let currentMode = 'new';
 
@@ -50,15 +59,28 @@
 
         async function loadData() {
             try {
-                // ดึงเลขใหม่
                 const resNext = await fetch(WEB_APP_URL);
                 document.getElementById('hpIdNew').value = await resNext.text();
-                // ดึงรายการเดิม
                 const resList = await fetch(WEB_APP_URL + "?mode=list");
                 const ids = await resList.json();
-                const select = document.getElementById('hpIdEdit');
-                select.innerHTML = ids.map(id => `<option value="${id}">${id}</option>`).join('');
+                document.getElementById('hpIdEdit').innerHTML = ids.map(id => `<option value="${id}">${id}</option>`).join('');
             } catch (e) { console.error("Load failed"); }
+        }
+
+        function checkFiles(type) {
+            if (type === 'thumb') {
+                const files = document.getElementById('inputThumb').files;
+                document.getElementById('labelThumb').innerText = files.length > 0 ? "✅ เลือกแล้ว: " + files[0].name : "📷 แตะเพื่อเลือกหน้าปก";
+            } else {
+                const files = document.getElementById('inputGallery').files;
+                if (files.length > 15) {
+                    alert("เลือกรูปอัลบั้มได้ไม่เกิน 15 รูปครับ");
+                    document.getElementById('inputGallery').value = "";
+                    document.getElementById('labelGallery').innerText = "🖼️ แตะเพื่อเพิ่มรูปอัลบั้ม";
+                } else {
+                    document.getElementById('labelGallery').innerText = files.length > 0 ? "✅ เลือกแล้ว " + files.length + " รูป" : "🖼️ แตะเพื่อเพิ่มรูปอัลบั้ม";
+                }
+            }
         }
 
         function switchMode(mode) {
@@ -71,7 +93,53 @@
 
         async function handleUpload() {
             const hpId = currentMode === 'new' ? document.getElementById('hpIdNew').value : document.getElementById('hpIdEdit').value;
-            // ... (โค้ดส่งข้อมูล fetch POST เหมือนเดิม)
+            const thumbFile = document.getElementById('inputThumb').files;
+            const galleryFiles = document.getElementById('inputGallery').files;
+            const statusBox = document.getElementById('statusBox');
+            const btn = document.getElementById('uploadBtn');
+
+            if (thumbFile.length === 0 && galleryFiles.length === 0) {
+                alert("กรุณาเลือกรูปหน้าปกหรือรูปอัลบั้มอย่างน้อย 1 รูปครับ");
+                return;
+            }
+
+            btn.disabled = true;
+            statusBox.classList.remove('hidden');
+            statusBox.className = "mb-6 p-4 rounded-2xl text-center bg-blue-50 text-blue-600 animate-pulse";
+            statusBox.innerText = "กำลังประมวลผลรูปภาพ...";
+
+            try {
+                const filesData = [];
+                // จัดการรูปหน้าปก (ถ้ามี)
+                if (thumbFile.length > 0) {
+                    const base64 = await convertToBase64(thumbFile[0]);
+                    filesData.push({ name: "thumb_" + thumbFile[0].name, type: thumbFile[0].type, base64: base64.split(',')[1], isThumb: true });
+                }
+                // จัดการรูปอัลบั้ม (ถ้ามี)
+                for (let file of galleryFiles) {
+                    const base64 = await convertToBase64(file);
+                    filesData.push({ name: file.name, type: file.type, base64: base64.split(',')[1], isThumb: false });
+                }
+
+                statusBox.innerText = "🚀 กำลังส่งข้อมูลไปยัง Google Drive...";
+                await fetch(WEB_APP_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ hpId: hpId, files: filesData }) });
+
+                statusBox.className = "mb-6 p-4 rounded-2xl text-center bg-green-50 text-green-600";
+                statusBox.innerText = "✅ บันทึกสำเร็จ! ระบบกำลังรีเฟรช...";
+                setTimeout(() => location.reload(), 2000);
+            } catch (error) {
+                statusBox.className = "mb-6 p-4 rounded-2xl text-center bg-red-50 text-red-600";
+                statusBox.innerText = "❌ เกิดข้อผิดพลาด: " + error.message;
+                btn.disabled = false;
+            }
+        }
+
+        function convertToBase64(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = () => resolve(reader.result);
+                reader.readAsDataURL(file);
+            });
         }
     </script>
 </body>
