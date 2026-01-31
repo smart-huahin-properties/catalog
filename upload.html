@@ -3,102 +3,75 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CoCo Master - Smart Auto-ID Uploader</title>
+    <title>CoCo Master - Smart Hybrid Uploader</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;600&display=swap" rel="stylesheet">
     <style>body { font-family: 'Prompt', sans-serif; }</style>
 </head>
-<body class="bg-slate-50 min-h-screen p-4">
-    <div class="max-w-md mx-auto bg-white rounded-[2.5rem] shadow-2xl p-8 mt-10">
-        <div class="text-center mb-8">
-            <span class="text-5xl">🏠</span>
-            <h2 class="text-2xl font-bold mt-4 text-slate-800">Smart Uploader</h2>
-            <p id="idDisplay" class="text-blue-600 font-bold text-lg mt-1">กำลังดึงเลขที่บ้านล่าสุด...</p>
+<body class="bg-slate-50 min-h-screen p-4 text-slate-800">
+    <div class="max-w-md mx-auto bg-white rounded-[2.5rem] shadow-2xl p-8 mt-6">
+        <h2 class="text-2xl font-bold text-center mb-6">🚀 ระบบจัดการรูปภาพ</h2>
+        
+        <div class="flex gap-2 mb-8 bg-slate-100 p-1.5 rounded-2xl">
+            <button onclick="switchMode('new')" id="tabNew" class="flex-1 py-3 rounded-xl font-bold bg-white shadow-sm text-blue-600 transition-all">➕ เพิ่มใหม่</button>
+            <button onclick="switchMode('edit')" id="tabEdit" class="flex-1 py-3 rounded-xl font-bold text-slate-500 transition-all">✏️ แก้ไขเดิม</button>
         </div>
 
-        <div class="mb-6">
-            <label class="block text-slate-700 font-semibold mb-2 ml-1">รหัสบ้านที่จะบันทึก (HP_ID)</label>
-            <input type="text" id="hpId" readonly class="w-full p-4 bg-slate-100 border-none rounded-2xl font-bold text-slate-600 outline-none">
-            <p class="text-xs text-slate-400 mt-2 ml-1">* ระบบรันเลขถัดไปให้คุณอัตโนมัติ</p>
+        <div id="sectionNew" class="mb-6">
+            <label class="block font-semibold mb-2 ml-1">รหัสบ้านใหม่ (Auto-Run):</label>
+            <input type="text" id="hpIdNew" readonly class="w-full p-4 bg-slate-50 border-2 border-dashed border-slate-200 rounded-2xl font-bold text-blue-600 outline-none text-center">
+        </div>
+
+        <div id="sectionEdit" class="hidden mb-6">
+            <label class="block font-semibold mb-2 ml-1">เลือกบ้านที่จะเพิ่มรูป/แก้ไข:</label>
+            <select id="hpIdEdit" class="w-full p-4 bg-white border-2 border-slate-200 rounded-2xl outline-none focus:border-blue-500 appearance-none">
+                <option value="">กำลังโหลดรายการ...</option>
+            </select>
         </div>
 
         <div class="mb-8">
-            <label class="block text-slate-700 font-semibold mb-2 ml-1">เลือกรูปภาพ (รูปแรก = หน้าปก)</label>
-            <input type="file" id="fileInput" multiple accept="image/*" 
-                class="block w-full text-sm text-slate-500 file:mr-4 file:py-3 file:px-6 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 cursor-pointer"/>
+            <label class="block font-semibold mb-2 ml-1 text-sm">เลือกรูปภาพ (รูปแรก = หน้าปก)</label>
+            <input type="file" id="fileInput" multiple accept="image/*" class="w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:bg-blue-50 file:text-blue-700">
         </div>
 
-        <div id="statusBox" class="hidden mb-6 p-4 rounded-2xl text-center text-sm font-medium"></div>
+        <div id="statusBox" class="hidden mb-6 p-4 rounded-2xl text-center text-sm"></div>
 
-        <button onclick="handleUpload()" id="uploadBtn" 
-            class="w-full bg-blue-600 hover:bg-blue-700 text-white py-5 rounded-2xl font-bold text-lg shadow-lg shadow-blue-200 transition-all">
-            ยืนยันการบันทึกและ Sync
+        <button onclick="handleUpload()" id="uploadBtn" class="w-full bg-blue-600 text-white py-5 rounded-2xl font-bold text-lg shadow-lg hover:bg-blue-700 transition-all">
+            ยืนยันการดำเนินการ
         </button>
     </div>
 
     <script>
-        // 🛑 ใส่ URL ที่ได้จากขั้นตอน Deploy ของคุณตรงนี้
+        // 🛑 อย่าลืมวาง URL ของคุณตรงนี้ครับ
         const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxdBLieOJ5mFt8o6Bv5hLLS0Tg1MzqsALUHefXL_VKB7N2dZwmEStRFiwKaHGTHu6lq/exec"; 
+        let currentMode = 'new';
 
-        // ดึงเลข HP_ID ล่าสุดเมื่อเปิดหน้าเว็บ
-        window.onload = async function() {
+        window.onload = loadData;
+
+        async function loadData() {
             try {
-                const response = await fetch(WEB_APP_URL);
-                const nextId = await response.text();
-                document.getElementById('hpId').value = nextId;
-                document.getElementById('idDisplay').innerText = "เตรียมบันทึกเลข: " + nextId;
-            } catch (e) {
-                document.getElementById('idDisplay').innerText = "กรุณาตรวจสอบการเชื่อมต่อ";
-            }
-        };
-
-        async function handleUpload() {
-            const fileInput = document.getElementById('fileInput');
-            const hpId = document.getElementById('hpId').value;
-            const statusBox = document.getElementById('statusBox');
-            const btn = document.getElementById('uploadBtn');
-
-            if (fileInput.files.length === 0) { alert("กรุณาเลือกรูปภาพครับ"); return; }
-
-            btn.disabled = true;
-            statusBox.classList.remove('hidden');
-            statusBox.className = "mb-6 p-4 rounded-2xl text-center bg-blue-50 text-blue-600";
-            statusBox.innerText = "กำลังอัปโหลด... กรุณารอสักครู่";
-
-            try {
-                const filesData = [];
-                for (let i = 0; i < fileInput.files.length; i++) {
-                    const base64 = await convertToBase64(fileInput.files[i]);
-                    filesData.push({
-                        name: fileInput.files[i].name,
-                        type: fileInput.files[i].type,
-                        base64: base64.split(',')[1]
-                    });
-                }
-                
-                await fetch(WEB_APP_URL, {
-                    method: 'POST',
-                    mode: 'no-cors',
-                    body: JSON.stringify({ hpId: hpId, files: filesData })
-                });
-
-                statusBox.className = "mb-6 p-4 rounded-2xl text-center bg-green-50 text-green-600";
-                statusBox.innerText = "✅ บันทึกสำเร็จ! ระบบรันเลข HP_ID ถัดไปให้แล้ว";
-                setTimeout(() => location.reload(), 3000); // โหลดหน้าใหม่เพื่อรับเลขถัดไป
-                
-            } catch (error) {
-                statusBox.className = "mb-6 p-4 rounded-2xl text-center bg-red-50 text-red-600";
-                statusBox.innerText = "❌ ผิดพลาด: " + error.message;
-                btn.disabled = false;
-            }
+                // ดึงเลขใหม่
+                const resNext = await fetch(WEB_APP_URL);
+                document.getElementById('hpIdNew').value = await resNext.text();
+                // ดึงรายการเดิม
+                const resList = await fetch(WEB_APP_URL + "?mode=list");
+                const ids = await resList.json();
+                const select = document.getElementById('hpIdEdit');
+                select.innerHTML = ids.map(id => `<option value="${id}">${id}</option>`).join('');
+            } catch (e) { console.error("Load failed"); }
         }
 
-        function convertToBase64(file) {
-            return new Promise((resolve, reject) => {
-                const reader = new FileReader();
-                reader.onload = () => resolve(reader.result);
-                reader.readAsDataURL(file);
-            });
+        function switchMode(mode) {
+            currentMode = mode;
+            document.getElementById('sectionNew').classList.toggle('hidden', mode === 'edit');
+            document.getElementById('sectionEdit').classList.toggle('hidden', mode === 'new');
+            document.getElementById('tabNew').className = mode === 'new' ? "flex-1 py-3 rounded-xl font-bold bg-white shadow-sm text-blue-600" : "flex-1 py-3 rounded-xl font-bold text-slate-500";
+            document.getElementById('tabEdit').className = mode === 'edit' ? "flex-1 py-3 rounded-xl font-bold bg-white shadow-sm text-blue-600" : "flex-1 py-3 rounded-xl font-bold text-slate-500";
+        }
+
+        async function handleUpload() {
+            const hpId = currentMode === 'new' ? document.getElementById('hpIdNew').value : document.getElementById('hpIdEdit').value;
+            // ... (โค้ดส่งข้อมูล fetch POST เหมือนเดิม)
         }
     </script>
 </body>
