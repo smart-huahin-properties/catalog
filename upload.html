@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CoCo Master - Smart Multi-Uploader</title>
+    <title>CoCo Master - Smart Auto-ID Uploader</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;600&display=swap" rel="stylesheet">
     <style>body { font-family: 'Prompt', sans-serif; }</style>
@@ -11,42 +11,46 @@
 <body class="bg-slate-50 min-h-screen p-4">
     <div class="max-w-md mx-auto bg-white rounded-[2.5rem] shadow-2xl p-8 mt-10">
         <div class="text-center mb-8">
-            <span class="text-5xl">🚀</span>
+            <span class="text-5xl">🏠</span>
             <h2 class="text-2xl font-bold mt-4 text-slate-800">Smart Uploader</h2>
-            <p class="text-slate-500 text-sm">อัปโหลดรูปหลายใบ พร้อม Sync อัตโนมัติ</p>
+            <p id="idDisplay" class="text-blue-600 font-bold text-lg mt-1">กำลังดึงเลขที่บ้านล่าสุด...</p>
         </div>
 
         <div class="mb-6">
-            <label class="block text-slate-700 font-semibold mb-2 ml-1">เลือกรายการบ้าน (HP_ID)</label>
-            <select id="hpId" class="w-full p-4 bg-slate-100 border-none rounded-2xl focus:ring-2 focus:ring-blue-500 outline-none appearance-none">
-                <option value="HP-0001">HP-0001</option>
-                <option value="HP-0002">HP-0002</option>
-                <option value="HP-0003">HP-0003</option>
-                <option value="HP-0004">HP-0004</option>
-                <option value="HP-0005">HP-0005</option>
-            </select>
+            <label class="block text-slate-700 font-semibold mb-2 ml-1">รหัสบ้านที่จะบันทึก (HP_ID)</label>
+            <input type="text" id="hpId" readonly class="w-full p-4 bg-slate-100 border-none rounded-2xl font-bold text-slate-600 outline-none">
+            <p class="text-xs text-slate-400 mt-2 ml-1">* ระบบรันเลขถัดไปให้คุณอัตโนมัติ</p>
         </div>
 
         <div class="mb-8">
-            <label class="block text-slate-700 font-semibold mb-2 ml-1">เลือกรูปภาพจากคลังภาพ</label>
-            <div class="relative group">
-                <input type="file" id="fileInput" multiple accept="image/*" 
-                    class="block w-full text-sm text-slate-500 file:mr-4 file:py-3 file:px-6 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 cursor-pointer"/>
-            </div>
-            <p class="text-xs text-slate-400 mt-2 ml-1">* รูปแรกที่เลือกจะเป็น "รูปหน้าปก" โดยอัตโนมัติ</p>
+            <label class="block text-slate-700 font-semibold mb-2 ml-1">เลือกรูปภาพ (รูปแรก = หน้าปก)</label>
+            <input type="file" id="fileInput" multiple accept="image/*" 
+                class="block w-full text-sm text-slate-500 file:mr-4 file:py-3 file:px-6 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 cursor-pointer"/>
         </div>
 
         <div id="statusBox" class="hidden mb-6 p-4 rounded-2xl text-center text-sm font-medium"></div>
 
         <button onclick="handleUpload()" id="uploadBtn" 
-            class="w-full bg-blue-600 hover:bg-blue-700 text-white py-5 rounded-2xl font-bold text-lg shadow-lg shadow-blue-200 transition-all active:scale-95">
-            ยืนยันการอัปโหลด
+            class="w-full bg-blue-600 hover:bg-blue-700 text-white py-5 rounded-2xl font-bold text-lg shadow-lg shadow-blue-200 transition-all">
+            ยืนยันการบันทึกและ Sync
         </button>
     </div>
 
     <script>
-        // 🛑 วาง URL ที่ได้จากขั้นตอน Deploy (Web App URL) ตรงนี้ครับ
-        const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzK5R1CNTsZ4icOex6jeW86NfCxJN07N58Py2AM8Gtzd4qzx4-uzvCHatzb2mRxNAwX/exec"; 
+        // 🛑 ใส่ URL ที่ได้จากขั้นตอน Deploy ของคุณตรงนี้
+        const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxdBLieOJ5mFt8o6Bv5hLLS0Tg1MzqsALUHefXL_VKB7N2dZwmEStRFiwKaHGTHu6lq/exec"; 
+
+        // ดึงเลข HP_ID ล่าสุดเมื่อเปิดหน้าเว็บ
+        window.onload = async function() {
+            try {
+                const response = await fetch(WEB_APP_URL);
+                const nextId = await response.text();
+                document.getElementById('hpId').value = nextId;
+                document.getElementById('idDisplay').innerText = "เตรียมบันทึกเลข: " + nextId;
+            } catch (e) {
+                document.getElementById('idDisplay').innerText = "กรุณาตรวจสอบการเชื่อมต่อ";
+            }
+        };
 
         async function handleUpload() {
             const fileInput = document.getElementById('fileInput');
@@ -54,21 +58,16 @@
             const statusBox = document.getElementById('statusBox');
             const btn = document.getElementById('uploadBtn');
 
-            if (fileInput.files.length === 0) {
-                alert("กรุณาเลือกรูปภาพอย่างน้อย 1 รูปครับ");
-                return;
-            }
+            if (fileInput.files.length === 0) { alert("กรุณาเลือกรูปภาพครับ"); return; }
 
             btn.disabled = true;
-            btn.className = "w-full bg-slate-300 text-white py-5 rounded-2xl font-bold text-lg cursor-not-allowed";
             statusBox.classList.remove('hidden');
-            statusBox.className = "mb-6 p-4 rounded-2xl text-center text-sm font-medium bg-blue-50 text-blue-600 border border-blue-100";
-            statusBox.innerText = "กำลังย่อรูปและเตรียมส่งข้อมูล...";
+            statusBox.className = "mb-6 p-4 rounded-2xl text-center bg-blue-50 text-blue-600";
+            statusBox.innerText = "กำลังอัปโหลด... กรุณารอสักครู่";
 
             try {
                 const filesData = [];
                 for (let i = 0; i < fileInput.files.length; i++) {
-                    statusBox.innerText = `กำลังประมวลผลรูปที่ ${i + 1}/${fileInput.files.length}`;
                     const base64 = await convertToBase64(fileInput.files[i]);
                     filesData.push({
                         name: fileInput.files[i].name,
@@ -76,27 +75,21 @@
                         base64: base64.split(',')[1]
                     });
                 }
-
-                statusBox.innerText = "🚀 กำลังอัปโหลดเข้า Drive และสั่ง Sync...";
                 
-                const response = await fetch(WEB_APP_URL, {
+                await fetch(WEB_APP_URL, {
                     method: 'POST',
-                    mode: 'no-cors', // สำคัญ: Apps Script ต้องใช้ mode นี้
+                    mode: 'no-cors',
                     body: JSON.stringify({ hpId: hpId, files: filesData })
                 });
 
-                // เนื่องจาก no-cors จะอ่าน response ไม่ได้ เราจะหน่วงเวลาเช็คสำเร็จ
-                statusBox.className = "mb-6 p-4 rounded-2xl text-center text-sm font-medium bg-green-50 text-green-600 border border-green-100";
-                statusBox.innerText = "✅ อัปโหลดและสั่ง Sync สำเร็จ! หน้าเว็บจะอัปเดตทันที";
-                fileInput.value = "";
+                statusBox.className = "mb-6 p-4 rounded-2xl text-center bg-green-50 text-green-600";
+                statusBox.innerText = "✅ บันทึกสำเร็จ! ระบบรันเลข HP_ID ถัดไปให้แล้ว";
+                setTimeout(() => location.reload(), 3000); // โหลดหน้าใหม่เพื่อรับเลขถัดไป
                 
             } catch (error) {
-                statusBox.className = "mb-6 p-4 rounded-2xl text-center text-sm font-medium bg-red-50 text-red-600 border border-red-100";
-                statusBox.innerText = "❌ เกิดข้อผิดพลาด: " + error.message;
-            } finally {
+                statusBox.className = "mb-6 p-4 rounded-2xl text-center bg-red-50 text-red-600";
+                statusBox.innerText = "❌ ผิดพลาด: " + error.message;
                 btn.disabled = false;
-                btn.className = "w-full bg-blue-600 hover:bg-blue-700 text-white py-5 rounded-2xl font-bold text-lg shadow-lg shadow-blue-200 transition-all";
-                btn.innerText = "ยืนยันการอัปโหลด";
             }
         }
 
@@ -104,7 +97,6 @@
             return new Promise((resolve, reject) => {
                 const reader = new FileReader();
                 reader.onload = () => resolve(reader.result);
-                reader.onerror = error => reject(error);
                 reader.readAsDataURL(file);
             });
         }
